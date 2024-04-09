@@ -1,6 +1,7 @@
 package ec.project.todos.presentation
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,7 +9,9 @@ import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -40,8 +43,16 @@ class TasksViewModel @Inject constructor(): ViewModel() {
 
     fun saveTaskChanges(taskModel: TaskModel) {
         viewModelScope.launch(Dispatchers.Main) {
-            val index = _tasksList.indexOf(taskModel)
-            _tasksList[index]
+            val index = _tasksList.indexOfFirst { it.date == taskModel.date }
+            _tasksList[index] = taskModel
+        }
+    }
+
+    fun removeAllSelectedTasks() {
+        viewModelScope.launch(Dispatchers.Main) {
+            _tasksList.removeAll{
+                it.selected
+            }
         }
     }
 }

@@ -4,16 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
 import ec.project.todos.presentation.TaskModel
@@ -36,21 +41,30 @@ class MainActivity : ComponentActivity() {
         val tasksViewModel: TasksViewModel by viewModels()
         setContent {
             TODOsTheme {
-                // A surface container using the 'background' color from the theme
-
                 val showDialogData by tasksViewModel.showDialog.observeAsState(false)
                 val tasksList = tasksViewModel.tasksList
                 var task: TaskModel by remember {
                     mutableStateOf(TaskModel())
                 }
-
+                var hasSelectedTasks by remember {
+                    mutableStateOf(false)
+                }
+                val fabColor by animateColorAsState(
+                    targetValue = if (hasSelectedTasks) {
+                        Color.Red
+                    } else {
+                        FloatingActionButtonDefaults.containerColor
+                    }, label = "containerColor"
+                )
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
+                    ) {
                         TasksScreen(
                             tasks = tasksList,
                             onTaskClick = {
@@ -68,12 +82,14 @@ class MainActivity : ComponentActivity() {
                         TasksCreatorModal(
                             showModal = showDialogData,
                             onSaveClick = {
-                                if (task.date > 0L){
+                                if (task.date > 0L) {
                                     tasksViewModel.saveTaskChanges(task)
                                 } else {
-                                    tasksViewModel.createNewTask(task.copy(
-                                        date = System.currentTimeMillis()
-                                    ))
+                                    tasksViewModel.createNewTask(
+                                        task.copy(
+                                            date = System.currentTimeMillis()
+                                        )
+                                    )
                                 }
                                 tasksViewModel.onShowDialog(false)
                                 task = TaskModel()
@@ -84,7 +100,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onDeleteClick = {
                                 tasksViewModel.onShowDialog(false)
-                                if (task.date >= 0L){
+                                if (task.date >= 0L) {
                                     tasksViewModel.deleteTask(task.date)
                                 }
                                 task = TaskModel()
@@ -101,9 +117,26 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .size(64.dp)
                                 .align(Alignment.BottomEnd),
-                            onClick = { tasksViewModel.onShowDialog(true) }
+                            containerColor = fabColor,
+                            onClick = {
+                                if(hasSelectedTasks){
+                                    tasksViewModel.removeAllSelectedTasks()
+                                } else {
+                                    tasksViewModel.onShowDialog(true)
+                                }
+                            }
                         ) {
-                            Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                            Icon(
+                                imageVector = if (hasSelectedTasks) {
+                                    Icons.Default.Delete
+                                } else {
+                                    Icons.Default.Add
+                                }, contentDescription = null, tint = if (hasSelectedTasks) {
+                                    Color.White
+                                } else {
+                                    Color.Black
+                                }
+                            )
                         }
                     }
                 }
