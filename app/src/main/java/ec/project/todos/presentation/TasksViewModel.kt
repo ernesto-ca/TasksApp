@@ -1,19 +1,12 @@
 package ec.project.todos.presentation
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import ec.project.todos.data.repository.ITodoRepository
-import ec.project.todos.data.repository.TodoRepositoryImp
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -37,7 +30,7 @@ class TasksViewModel @Inject constructor(
 
     fun createNewTask(taskModel: TaskModel) {
         viewModelScope.launch(Dispatchers.Main) {
-            val isSuccess = todoRepository.saveTask(taskModel)
+            val isSuccess = todoRepository.addTask(taskModel)
             if (!isSuccess) {
                 _errorMessage.postValue("Error when trying to save new task, try again.")
             }
@@ -53,14 +46,15 @@ class TasksViewModel @Inject constructor(
         }
     }
 
-    fun saveTaskChanges(taskModel: TaskModel) {
+    fun updateTask(taskModel: TaskModel) {
         viewModelScope.launch(Dispatchers.Main) {
-            val isSuccess = todoRepository.saveTask(taskModel)
+            val isSuccess = todoRepository.updateTask(taskModel)
             if (!isSuccess) {
                 _errorMessage.postValue("Error when trying to update the task, try again.")
             }
         }
     }
+
 
     fun removeAllSelectedTasks() {
         viewModelScope.launch(Dispatchers.Main) {

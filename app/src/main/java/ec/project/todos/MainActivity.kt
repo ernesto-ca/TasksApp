@@ -20,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -93,14 +92,14 @@ class MainActivity : ComponentActivity() {
                                 tasks = tasks,
                                 onTaskClick = {
                                     if (it.selected) {
-                                        tasksViewModel.saveTaskChanges(it.copy(selected = false))
+                                        tasksViewModel.updateTask(it.copy(selected = false))
                                     } else {
                                         task = it
                                         tasksViewModel.onShowDialog(true)
                                     }
                                 },
                                 onTaskLongClick = {
-                                    tasksViewModel.saveTaskChanges(it.copy(selected = true))
+                                    tasksViewModel.updateTask(it.copy(selected = true))
                                 }
                             )
                         }
@@ -108,7 +107,7 @@ class MainActivity : ComponentActivity() {
                             showModal = showDialogData,
                             onSaveClick = {
                                 if (task.date > 0L) {
-                                    tasksViewModel.saveTaskChanges(task)
+                                    tasksViewModel.updateTask(task)
                                 } else {
                                     tasksViewModel.createNewTask(
                                         task.copy(

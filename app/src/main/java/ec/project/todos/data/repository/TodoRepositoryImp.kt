@@ -22,9 +22,19 @@ class TodoRepositoryImp @Inject constructor(
         }
     }
 
-    override suspend fun saveTask(taskModel: TaskModel): Boolean {
+    override suspend fun addTask(taskModel: TaskModel): Boolean {
         return try {
             taskDao.saveTask(taskModel.toEntity())
+            true
+        } catch (e: Exception){
+            Log.e(this::class.java.toString(), e.message.toString())
+            false
+        }
+    }
+
+    override suspend fun updateTask(taskModel: TaskModel): Boolean {
+        return try {
+            taskDao.updateTask(taskModel.toEntity())
             true
         } catch (e: Exception){
             Log.e(this::class.java.toString(), e.message.toString())
