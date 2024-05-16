@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -42,7 +45,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             TODOsTheme {
                 val showDialogData by tasksViewModel.showDialog.observeAsState(false)
-                val tasksList = tasksViewModel.tasksList
+                val errorMessage by tasksViewModel.errorMessage.observeAsState()
+                val tasksList by tasksViewModel.tasksList.observeAsState()
                 var task: TaskModel by remember {
                     mutableStateOf(TaskModel())
                 }
@@ -65,20 +69,38 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(8.dp)
                     ) {
-                        TasksScreen(
-                            tasks = tasksList,
-                            onTaskClick = {
-                                if (it.selected) {
-                                    tasksViewModel.saveTaskChanges(it.copy(selected = false))
-                                } else {
-                                    task = it
-                                    tasksViewModel.onShowDialog(true)
+                        errorMessage.takeIf { it.isNullOrEmpty().not() }?.let {
+                            AlertDialog(
+                                title = {
+                                        Text(text = "An Error Occurred When:")
+                                },
+                                text = {
+                                       Text(text = it)
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = {  tasksViewModel.clearErrorMessage() }) {
+                                        Text(text ="OK")
+                                    }
+                                },
+                                onDismissRequest = {  tasksViewModel.clearErrorMessage() }
+                            )
+                        }
+                        tasksList?.let { tasks ->
+                            TasksScreen(
+                                tasks = tasks,
+                                onTaskClick = {
+                                    if (it.selected) {
+                                        tasksViewModel.saveTaskChanges(it.copy(selected = false))
+                                    } else {
+                                        task = it
+                                        tasksViewModel.onShowDialog(true)
+                                    }
+                                },
+                                onTaskLongClick = {
+                                    tasksViewModel.saveTaskChanges(it.copy(selected = true))
                                 }
-                            },
-                            onTaskLongClick = {
-                                tasksViewModel.saveTaskChanges(it.copy(selected = true))
-                            }
-                        )
+                            )
+                        }
                         TasksCreatorModal(
                             showModal = showDialogData,
                             onSaveClick = {
@@ -101,7 +123,7 @@ class MainActivity : ComponentActivity() {
                             onDeleteClick = {
                                 tasksViewModel.onShowDialog(false)
                                 if (task.date >= 0L) {
-                                    tasksViewModel.deleteTask(task.date)
+                                    tasksViewModel.deleteTask(task.id)
                                 }
                                 task = TaskModel()
                             },
