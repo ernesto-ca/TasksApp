@@ -67,7 +67,7 @@ class TasksViewModel @Inject constructor(
             tasksList.value?.forEach{
                 if (it.selected && _errorMessage.value.isNullOrEmpty()){
                     deleteTask(it.id)
-                } else if (_errorMessage.value.isNullOrEmpty()) {
+                } else if (_errorMessage.value.isNullOrEmpty().not()) {
                     return@launch
                 }
             }

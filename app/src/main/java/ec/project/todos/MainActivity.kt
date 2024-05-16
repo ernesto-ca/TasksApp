@@ -21,6 +21,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -50,8 +51,10 @@ class MainActivity : ComponentActivity() {
                 var task: TaskModel by remember {
                     mutableStateOf(TaskModel())
                 }
-                var hasSelectedTasks by remember {
-                    mutableStateOf(false)
+                val hasSelectedTasks by remember {
+                    derivedStateOf {
+                        (tasksList?.any { it.selected } ?: false)
+                    }
                 }
                 val fabColor by animateColorAsState(
                     targetValue = if (hasSelectedTasks) {
