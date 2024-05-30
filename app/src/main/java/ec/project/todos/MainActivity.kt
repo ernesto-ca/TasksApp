@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -39,129 +40,135 @@ import ec.project.todos.ui.theme.TODOsTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val tasksViewModel: TasksViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val tasksViewModel: TasksViewModel by viewModels()
         setContent {
-            TODOsTheme {
-                val showDialogData by tasksViewModel.showDialog.observeAsState(false)
-                val errorMessage by tasksViewModel.errorMessage.observeAsState()
-                val tasksList by tasksViewModel.tasksList.observeAsState()
-                var task: TaskModel by remember {
-                    mutableStateOf(TaskModel())
+            MainScaffold()
+        }
+    }
+
+    @Composable
+    fun MainScaffold() {
+        TODOsTheme {
+            val showDialogData by tasksViewModel.showDialog.observeAsState(false)
+            val errorMessage by tasksViewModel.errorMessage.observeAsState()
+            val tasksList by tasksViewModel.tasksList.observeAsState()
+            var task: TaskModel by remember {
+                mutableStateOf(TaskModel())
+            }
+            val hasSelectedTasks by remember {
+                derivedStateOf {
+                    (tasksList?.any { it.selected } ?: false)
                 }
-                val hasSelectedTasks by remember {
-                    derivedStateOf {
-                        (tasksList?.any { it.selected } ?: false)
-                    }
-                }
-                val fabColor by animateColorAsState(
-                    targetValue = if (hasSelectedTasks) {
-                        Color.Red
-                    } else {
-                        FloatingActionButtonDefaults.containerColor
-                    }, label = "containerColor"
-                )
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
+            }
+            val fabColor by animateColorAsState(
+                targetValue = if (hasSelectedTasks) {
+                    Color.Red
+                } else {
+                    FloatingActionButtonDefaults.containerColor
+                }, label = "containerColor"
+            )
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                    ) {
-                        errorMessage.takeIf { it.isNullOrEmpty().not() }?.let {
-                            AlertDialog(
-                                title = {
-                                        Text(text = "An Error Occurred When:")
-                                },
-                                text = {
-                                       Text(text = it)
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = {  tasksViewModel.clearErrorMessage() }) {
-                                        Text(text ="OK")
-                                    }
-                                },
-                                onDismissRequest = {  tasksViewModel.clearErrorMessage() }
-                            )
-                        }
-                        tasksList?.let { tasks ->
-                            TasksScreen(
-                                tasks = tasks,
-                                onTaskClick = {
-                                    if (it.selected) {
-                                        tasksViewModel.updateTask(it.copy(selected = false))
-                                    } else {
-                                        task = it
-                                        tasksViewModel.onShowDialog(true)
-                                    }
-                                },
-                                onTaskLongClick = {
-                                    tasksViewModel.updateTask(it.copy(selected = true))
-                                }
-                            )
-                        }
-                        TasksCreatorModal(
-                            showModal = showDialogData,
-                            onSaveClick = {
-                                if (task.date > 0L) {
-                                    tasksViewModel.updateTask(task)
-                                } else {
-                                    tasksViewModel.createNewTask(
-                                        task.copy(
-                                            date = System.currentTimeMillis()
-                                        )
-                                    )
-                                }
-                                tasksViewModel.onShowDialog(false)
-                                task = TaskModel()
+                    errorMessage.takeIf { it.isNullOrEmpty().not() }?.let {
+                        AlertDialog(
+                            title = {
+                                Text(text = "An Error Occurred When:")
                             },
-                            onCloseClick = {
-                                tasksViewModel.onShowDialog(false)
-                                task = TaskModel()
+                            text = {
+                                Text(text = it)
                             },
-                            onDeleteClick = {
-                                tasksViewModel.onShowDialog(false)
-                                if (task.date >= 0L) {
-                                    tasksViewModel.deleteTask(task.id)
+                            confirmButton = {
+                                TextButton(onClick = {  tasksViewModel.clearErrorMessage() }) {
+                                    Text(text ="OK")
                                 }
-                                task = TaskModel()
                             },
-                            value = task.text,
-                            isEditMode = task.date > 0L,
-                            onValueChange = {
-                                task = task.copy(
-                                    text = it
-                                )
-                            }
+                            onDismissRequest = {  tasksViewModel.clearErrorMessage() }
                         )
-                        FloatingActionButton(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .align(Alignment.BottomEnd),
-                            containerColor = fabColor,
-                            onClick = {
-                                if(hasSelectedTasks){
-                                    tasksViewModel.removeAllSelectedTasks()
+                    }
+                    tasksList?.let { tasks ->
+                        TasksScreen(
+                            tasks = tasks,
+                            onTaskClick = {
+                                if (it.selected) {
+                                    tasksViewModel.updateTask(it.copy(selected = false))
                                 } else {
+                                    task = it
                                     tasksViewModel.onShowDialog(true)
                                 }
+                            },
+                            onTaskLongClick = {
+                                tasksViewModel.updateTask(it.copy(selected = true))
                             }
-                        ) {
-                            Icon(
-                                imageVector = if (hasSelectedTasks) {
-                                    Icons.Default.Delete
-                                } else {
-                                    Icons.Default.Add
-                                }, contentDescription = null, tint = if (hasSelectedTasks) {
-                                    Color.White
-                                } else {
-                                    Color.Black
-                                }
+                        )
+                    }
+                    TasksCreatorModal(
+                        showModal = showDialogData,
+                        onSaveClick = {
+                            if (task.date > 0L) {
+                                tasksViewModel.updateTask(task)
+                            } else {
+                                tasksViewModel.createNewTask(
+                                    task.copy(
+                                        date = System.currentTimeMillis()
+                                    )
+                                )
+                            }
+                            tasksViewModel.onShowDialog(false)
+                            task = TaskModel()
+                        },
+                        onCloseClick = {
+                            tasksViewModel.onShowDialog(false)
+                            task = TaskModel()
+                        },
+                        onDeleteClick = {
+                            tasksViewModel.onShowDialog(false)
+                            if (task.date >= 0L) {
+                                tasksViewModel.deleteTask(task.id)
+                            }
+                            task = TaskModel()
+                        },
+                        value = task.text,
+                        isEditMode = task.date > 0L,
+                        onValueChange = {
+                            task = task.copy(
+                                text = it
                             )
                         }
+                    )
+                    FloatingActionButton(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .align(Alignment.BottomEnd),
+                        containerColor = fabColor,
+                        onClick = {
+                            if(hasSelectedTasks){
+                                tasksViewModel.removeAllSelectedTasks()
+                            } else {
+                                tasksViewModel.onShowDialog(true)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (hasSelectedTasks) {
+                                Icons.Default.Delete
+                            } else {
+                                Icons.Default.Add
+                            }, contentDescription = null, tint = if (hasSelectedTasks) {
+                                Color.White
+                            } else {
+                                Color.Black
+                            }
+                        )
                     }
                 }
             }
