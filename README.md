@@ -3,7 +3,7 @@ Project app from online course " Jetpack Compose: Curso definitivo desde 0 [2023
 
 ## This is how it looks!
 <img src="/Media/TODOs_App_Showcase.gif" width="300" height="600"/>
-![TODOsApp](/Media/TODOs_App_Showcase.gif)
+
 
 ### Extra notes
 - Room is the Database
